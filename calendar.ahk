@@ -3,28 +3,34 @@ Persistent
 
 myGui := Gui("+AlwaysOnTop -Caption +ToolWindow")
 myGui.SetFont("s10", "Tahoma")
-
-; فقط متن پس‌زمینه داشته باشه، نه کل GUI
 dateText := myGui.AddText("Background0xeeeeee c0x333333 w180 h25 Center vdateText", "")
 
 screenHeight := A_ScreenHeight
 guiY := screenHeight - 45
 myGui.Show("x10 y" guiY " NoActivate")
 
-; بررسی فعال بودن پنجره تمام‌صفحه
 SetTimer(CheckFullscreen, 1000)
 SetTimer(UpdateDate, 60000)
 SetTimer(() => ForceTopmost(myGui.Hwnd), 500)
-
 UpdateDate()
 
 CheckFullscreen() {
     global myGui
-    WinGetPos(&x, &y, &w, &h, "A") ; ابعاد پنجره فعال
-    if (w = A_ScreenWidth && h = A_ScreenHeight) {
-        myGui.Hide()
-    } else {
-        myGui.Show("NoActivate")
+    ; Check for a real active window, otherwise skip (desktop has no HWND sometimes)
+    if WinExist("A") {
+        class := WinGetClass("A")
+        if (class = "WorkerW" or class = "Progman") {
+            ; desktop clicked – don't hide
+            myGui.Show("NoActivate")
+            return
+        }
+
+        WinGetPos(&x, &y, &w, &h, "A")
+        if (w = A_ScreenWidth && h = A_ScreenHeight) {
+            myGui.Hide()
+        } else {
+            myGui.Show("NoActivate")
+        }
     }
 }
 
@@ -68,7 +74,6 @@ MiladiToShamsi(y, m, d) {
         }
         j_day_no -= days[i]
     }
-
     weekNames := ["یکشنبه","دوشنبه","سه‌شنبه","چهارشنبه","پنج‌شنبه","جمعه","شنبه"]
     monthNames := ["فروردین","اردیبهشت","خرداد","تیر","مرداد","شهریور","مهر","آبان","آذر","دی","بهمن","اسفند"]
     wday := FormatTime(, "WDay")
